@@ -1,49 +1,54 @@
-// webhooks.js
+// clerkWebhooks.js
 import User from "../models/User.js";
 import { Webhook } from "svix";
 
 const clerkWebhooks = async (req, res) => {
   try {
     const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
+
     const headers = {
       "svix-id": req.headers["svix-id"],
       "svix-timestamp": req.headers["svix-timestamp"],
       "svix-signature": req.headers["svix-signature"],
     };
 
-    const payload = req.body; // Buffer
-    const event = await wh.verify(payload, headers);
+    // IMPORTANT: req.body must be raw buffer (middleware fix below)
+    const payload = req.body;
 
-    console.log("Verified event:", event);
+    const event = await wh.verify(payload, headers);
+    console.log("Verified event:", event.type);
 
     const { type, data } = event;
 
     const userData = {
       clerkId: data.id,
-      username: `${data.first_name} ${data.last_name}`,
+      username: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
       email: data.email_addresses?.[0]?.email_address || "",
-      image: data.image_url,
+      image: data.image_url || "",
+      recentSearchedCities:["new"]
     };
 
     switch (type) {
       case "user.created":
         await User.create(userData);
-        // const newUser=new User(userData)
-        // await newUser.save()
         break;
+
       case "user.deleted":
         await User.findOneAndDelete({ clerkId: data.id });
         break;
+
       case "user.updated":
         await User.findOneAndUpdate({ clerkId: data.id }, userData);
         break;
+
       default:
         console.log("Unhandled event type:", type);
+        break;
     }
 
-    res.json({ success: true, message: "Webhook received" });
+    res.status(200).json({ success: true, message: "Webhook processed" });
   } catch (err) {
-    console.log("Webhook error:", err.message);
+    console.error("Webhook error:", err.message);
     res.status(400).json({ success: false, message: "Webhook failed" });
   }
 };
