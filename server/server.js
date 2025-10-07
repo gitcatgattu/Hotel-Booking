@@ -1,30 +1,25 @@
-const express=require('express');
-const bodyParser=require('body-parser');
-const cors=require('cors');
-const mongoose=require('mongoose');
-const dotenv=require('dotenv');
-dotenv.config();
-const { clerkMiddleware } = require('@clerk/express');
-const connectDB=require('./configs/db');
-const clerkWebhooks = require('./controllers/clerkWebhooks');
+import express from "express"
+
+import "dotenv/config";
+
+import cors from "cors";
+import connectDB from "./configs/db.js";
+import {clerkMiddleware} from "@clerk/express"
+import clerkWebhooks from "./controllers/clerkWebhooks.js";
 connectDB()
-const app=express();
-const PORT=process.env.PORT||5000;
+const app = express()
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors()) // Enable Cross-Origin Resource Sharing
+
+//middleware
+app.use(express.json())
 app.use(clerkMiddleware())
-app.use('/api/clerk',clerkWebhooks)
-app.get('/',(req,res)=>{
-    res.send('Hello World!');
-});
-
-// MongoDB connection
+app.use("/api/clerk",clerkWebhooks)
 
 
-// Start server
-app.listen(PORT,()=>{
-    console.log(`Server is running on port http://localhost:${PORT}`);
-});
 
+app.get('/', (req, res)=> res.send("API is working"))
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`))

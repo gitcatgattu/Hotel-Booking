@@ -1,5 +1,5 @@
-const mongoose=require('mongoose')
-
+// const mongoose=require('mongoose')
+import mongoose from 'mongoose'
 const UserSchema=mongoose.Schema({
   _id:{type:String,required:true,},
   username:{type:String,required:true,},
@@ -12,4 +12,4 @@ const UserSchema=mongoose.Schema({
 },{timeStamps:true})
 
 const User=mongoose.model("User",UserSchema)
-module.exports = User
+export default User

@@ -1,5 +1,7 @@
-const user=require("../models/User")
-const {Webhook} = require('svix')
+// const user=require("../models/User")
+// const {Webhook} = require('svix')
+import User from "../models/User.js"
+import {Webhook} from 'svix'
 
 const clerkWebhooks=async (req,res)=>{
   try{
@@ -17,22 +19,20 @@ const clerkWebhooks=async (req,res)=>{
       username:data.first_name+" "+data.last_name,
       email:data.emailAddresses[0].emailAddress,
       image:data.image_url,
-      recentSearchedCities:""
     }
     switch(eventType){
-      case "user.created":
+      case "user.created":{
         //add user to db
-        const newUser=new user(userData)
-        await newUser.save()
-        break;
-      case "user.deleted":
+        await User.create(userData)
+        break;}
+      case "user.deleted":{
         //delete user from db
-        await user.findByIdAndDelete(data.id)
-        break;
-      case "user.updated":
+        await User.findByIdAndDelete(data.id)
+        break;}
+      case "user.updated":{
         //update user in db
-        await user.findByIdAndUpdate(data.id,userData)
-        break;
+        await User.findByIdAndUpdate(data.id,userData)
+        break;}
       default:
         console.log("Unhandled event type:", eventType);    
     }
@@ -42,4 +42,4 @@ const clerkWebhooks=async (req,res)=>{
     res.status(400).json({succes:false,message:"Webhook failed"})
   }
 }
-module.exports=clerkWebhooks
+export default clerkWebhooks
