@@ -11,35 +11,47 @@ const clerkWebhooks=async (req,res)=>{
       'svix-timestamp': req.headers['svix-timestamp'],
       'svix-signature': req.headers['svix-signature']
     }
-    const event =await wh.verify(JSON.stringify(req.body), headers);
+    const payload=req.body
+    const event = await wh.verify(payload, headers);
     //get data
-    const {data,eventType}=req.body
-    const userData={
-      _id:data.id,
-      username:data.first_name+" "+data.last_name,
-      email:data.emailAddresses[0].emailAddress,
-      image:data.image_url,
-    }
-    switch(eventType){
-      case "user.created":{
-        //add user to db
-        await User.create(userData)
-        break;}
-      case "user.deleted":{
-        //delete user from db
-        await User.findByIdAndDelete(data.id)
-        break;}
-      case "user.updated":{
-        //update user in db
-        await User.findByIdAndUpdate(data.id,userData)
-        break;}
+    console.log("Verified event:", event);
+
+    // Clerk sends payload as { type, data }
+    const { type, data } = req.body;
+    console.log("Event type:", type);
+    console.log("User data:", data);
+
+    const userData = {
+      _id: data.id,
+      username: `${data.first_name} ${data.last_name}`,
+      email: data.email_addresses ? data.email_addresses[0].email_address : "",
+      image: data.image_url,
+    };
+    console.log(userData)
+    switch (type) {
+      case "user.created": {
+        // add user to db
+        await User.create(userData);
+        break;
+      }
+      case "user.deleted": {
+        // delete user from db
+        await User.findByIdAndDelete(data.id);
+        break;
+      }
+      case "user.updated": {
+        // update user in db
+        await User.findByIdAndUpdate(data.id, userData);
+        break;
+      }
       default:
-        console.log("Unhandled event type:", eventType);    
+        console.log("Unhandled event type:", type);
     }
-    res.json({succes:true,message:"Webhook received"})
+    res.json({ succes: true, message: "Webhook received" });
   }catch(err){
     console.log(err.message)
     res.status(400).json({succes:false,message:"Webhook failed"})
   }
 }
+
 export default clerkWebhooks

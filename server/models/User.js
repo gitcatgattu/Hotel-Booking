@@ -9,6 +9,7 @@ const UserSchema=mongoose.Schema({
   recentSearchedCities:{type:String,required:true,},
 
 
+  
 },{timeStamps:true})
 
 const User=mongoose.model("User",UserSchema)
