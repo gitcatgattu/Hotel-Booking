@@ -75,7 +75,7 @@ app.post(
   bodyParser.raw({ type: "application/json" }),
   clerkWebhooks
 );
-app.get("/", (req, res) => res.send("API is working"));
+app.get("/", (req, res) => res.send("API is working after updates"));
 app.use((req, res, next) => {
   console.log(req.user);
   next();
