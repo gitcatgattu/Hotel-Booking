@@ -86,14 +86,14 @@ const AllRooms = () => {
   const matchesRoomType = (room) => {
     return (
       selectedFilters.roomType.length === 0 ||
-      setSelectedFilters.roomType.includes(room.roomType)
+      selectedFilters.roomType.includes(room.roomType)
     );
   };
 
   const matchesPriceRange = (room) => {
     return (
-      selectedFilters.roomType.length === 0 ||
-      setSelectedFilters.priceRange.some((range) => {
+      selectedFilters.priceRange.length === 0 ||
+      selectedFilters.priceRange.some((range) => {
         const [min, max] = range.split("to").map(Number);
         return room.pricePerNight >= min && room.pricePerNight <= max;
       })
