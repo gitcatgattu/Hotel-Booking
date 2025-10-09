@@ -24,28 +24,31 @@ app.use(bodyParser.json());
 
 // ✅ Webhook (must use raw parser)
 app.post(
-  "/api/clerk",
-  bodyParser.raw({ type: "application/json" }),
+  "/api/webhooks/clerk",
+  express.raw({ type: "application/json" }),
   clerkWebhooks
 );
 
 // ✅ Add Clerk middleware globally
-app.use(express.json())
+app.use(express.json());
 app.use(clerkMiddleware());
 
-
 // ✅ Public route
-app.get("/", (req, res) => res.send("API is working after updates"));
-app.get("/api/rooms",async(req,res)=>{
-   try {
+app.get("/api/rooms", async (req, res) => {
+  try {
     const rooms = await Room.find({ isAvailable: true }).populate("hotel");
     res.json({ success: true, rooms });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: err.message });
   }
-})
-app.use('/api/clerk',clerkWebhooks)
+});
+app.use("/api/clerk", clerkWebhooks);
+// ✅ Routes
+app.use("/api/user", userRouter);
+app.use("/api/hotels", hotelRouter);
+app.use("/api/rooms", roomRouter);
+app.use("/api/bookings", bookingRouter);
 
 // ✅ Protected middleware to attach user
 // app.use(requireAuth(), async (req, res, next) => {
@@ -62,12 +65,9 @@ app.use('/api/clerk',clerkWebhooks)
 //   }
 // });
 
-// ✅ Routes
-app.use("/api/user", userRouter);
-app.use("/api/hotels", hotelRouter);
-app.use("/api/rooms", roomRouter);
-app.use("/api/bookings", bookingRouter);
-
 // ✅ Start server
-const PORT = process.env.PORT||3000
-app.listen(PORT, () => console.log(`Server running on port http://localhost:${PORT}`));
+const PORT = process.env.PORT || 3000;
+// app.get("/", () => console.log("API is working after updates"));
+app.listen(PORT, () =>
+  console.log(`Server running on port http://localhost:${PORT}`)
+);

@@ -5,32 +5,32 @@ import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
 
 const MyBookings = () => {
-  const {axios,getToken,user}=useAppContext()
+  const { axios, getToken, user } = useAppContext();
 
-  const [bookings, setBookings] = React.useState([])
-  
-  const fetchUserBookings=async()=>{
-    try{
-      const {data}=await axios.get('/api/bookings.user',{headers:{Authorization:`Bearer ${await getToken()}`}})
-      if (data.success){
-        setBookings(data.bookings)
+  const [bookings, setBookings] = React.useState([]);
+
+  const fetchUserBookings = async () => {
+    try {
+      const { data } = await axios.get("/api/bookings/user", {
+        headers: { Authorization: `Bearer ${await getToken()}` },
+      });
+      if (data.success) {
+        setBookings(data.bookings);
+        console.log(data.bookings)
+      } else {
+        toast.error(data.message);
       }
-      else{
-        toast.error(data.message)
-      }
-    }catch(error){
-      toast.error(error.message)
+    } catch (error) {
+      toast.error(error.message);
     }
-  }
-useEffect(()=>{
-  if(user){
-    fetchUserBookings()
-
-  }
-  else{
-    toast.error("login first")
-  }
-},[user])
+  };
+  useEffect(() => {
+    if (user) {
+      fetchUserBookings();
+    } else {
+      toast.error("login first");
+    }
+  }, [user]);
 
   return (
     <div className="py-28 md:pb-35 md:pt-32 px-5 md:px-16 lg:px-20 xl:px-32">
@@ -61,27 +61,27 @@ border-gray-300 font-medium text-base py-3"
             {/* Hotel Details --- - */}
             <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
               <img
-                src={booking.room.images[0]}
+                src={booking?.room?.images[0] || ""}
                 alt="hotelimg"
                 className="min-md:w-44 rounded shadow object-cover"
               />
               <div>
                 <p className="text-2xl font-playfair">
-                  {booking.hotel.name}
+                  {booking?.hotel?.name}
                   <span className="text-sm font-inter">
                     {" "}
-                    ({booking.room.roomType})
+                    ({booking?.room?.roomType})
                   </span>
                 </p>
                 <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
                   <img src={assets.locationIcon} alt="hotelimg" />
-                  <span>{booking.hotel.address}</span>
+                  <span>{booking?.room?.hotel?.address}</span>
                 </div>
                 <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
                   <img src={assets.guestsIcon} alt="hotelimg" />
-                  <span>Guests: {booking.guests}</span>
+                  <span>Guests: {booking?.guests}</span>
                 </div>
-                <p className="text-base mt-2">Total: ${booking.totalPrice}</p>
+                <p className="text-base mt-2">Total: ${booking?.totalPrice}</p>
               </div>
             </div>
             {/* ------ Date & Timeings ---- */}
@@ -91,7 +91,7 @@ border-gray-300 font-medium text-base py-3"
                 <p>Check-In:</p>
 
                 <p className='className="text-gray-500 text-sm"'>
-                  {new Date(booking.checkInDate).toDateString()}
+                  {new Date(booking?.checkInDate).toDateString()}
                 </p>
               </div>
 
@@ -99,7 +99,7 @@ border-gray-300 font-medium text-base py-3"
                 <p>Check-Out:</p>
 
                 <p className='className="text-gray-500 text-sm"'>
-                  {new Date(booking.checkOutDate).toDateString()}
+                  {new Date(booking?.checkOutDate).toDateString()}
                 </p>
               </div>
             </div>
@@ -109,20 +109,20 @@ border-gray-300 font-medium text-base py-3"
               <div className="flex items-center gap-2">
                 <div
                   className={`h-3 w-3 rounded-full ${
-                    booking.isPaid ? "bg-green-500" : "bg-red-500"
+                    booking?.isPaid ? "bg-green-500" : "bg-red-500"
                   }`}
                 ></div>
 
                 <p
                   className={`text-sm ${
-                    booking.isPaid ? "text-green-500" : "text-red-500"
+                    booking?.isPaid ? "text-green-500" : "text-red-500"
                   }`}
                 >
-                  {booking.isPaid ? "Paid" : "Unpaid"}
+                  {booking?.isPaid ? "Paid" : "Unpaid"}
                 </p>
               </div>
 
-              {!booking.isPaid && (
+              {!booking?.isPaid && (
                 <button
                   className="px-4 py-1.5 mt-4 text-xs border border-gray-400
 

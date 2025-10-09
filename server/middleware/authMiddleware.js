@@ -1,28 +1,31 @@
-import jwt from "jsonwebtoken";
+// middleware/protect.js
+import { requireAuth } from "@clerk/express";
 import User from "../models/User.js";
 
-// Protect routes middleware
 export const protect = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    // Step 1: Use Clerk's built-in middleware to verify token
+    await new Promise((resolve, reject) => {
+      requireAuth()(req, res, (err) => (err ? reject(err) : resolve()));
+    });
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ success: false, message: "No token, authorization denied" });
+    // Step 2: Clerk verified the token successfully
+    const clerkUserId = req.auth.userId; // available after requireAuth()
+
+    // Step 3: Fetch your app’s user data from MongoDB
+    const user = await User.findById(clerkUserId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found in MongoDB" });
     }
 
-    const token = authHeader.split(" ")[1];
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const user = await User.findOne({ clerkId: decoded.clerkId });
-    if (!user) {
-      console.log("no user")
-      return res.status(401).json({ success: false, message: "User not found" });}
-
-    req.user = user; // attach user to request
+    // Step 4: Attach to request
+    req.user = user;
+    console.log("Middleware user: ", req.user);
     next();
-  } catch (err) {
-    console.error(err);
-    res.status(401).json({ success: false, message: "Not authorized" });
+  } catch (error) {
+    console.error("❌ protect middleware error:", error.message);
+    res.status(401).json({ success: false, message: "Unauthorized" });
   }
 };

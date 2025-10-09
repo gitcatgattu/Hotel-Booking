@@ -6,7 +6,7 @@ const bookingSchema = new mongoose.Schema(
 
     room: { type: String, ref: "Room", required: true },
 
-    hotel: { type: String, ref: "Hotel", required: true },
+    hotel: { type: String, ref: "Hotel" },
 
     checkInDate: { type: Date, required: true },
 

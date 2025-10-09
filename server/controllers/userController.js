@@ -1,18 +1,22 @@
 import User from "../models/User.js";
 
-// Get user data
 export const getUserData = async (req, res) => {
   try {
     const user = req.user;
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
 
-    const role = user.role;
-    const recentSearchedCities = user.recentSearchedCities || [];
-
-    res.json({ success: true, role, recentSearchedCities });
+    res.json({
+      success: true,
+      role: user.role || "user",
+      recentSearchedCities: user.recentSearchedCities || [],
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: err.message });
+    console.error("❌ getUserData error:", err.message);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
 
@@ -33,7 +37,11 @@ export const storeRecentSearchedCities = async (req, res) => {
 
     await user.save();
 
-    res.json({ success: true, message: "City added", recentSearchedCities: user.recentSearchedCities });
+    res.json({
+      success: true,
+      message: "City added",
+      recentSearchedCities: user.recentSearchedCities,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: err.message });
