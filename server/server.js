@@ -20,7 +20,7 @@ connectCloudinary();
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.json());
 
 // ✅ Webhook (must use raw parser)
 app.post(
@@ -43,24 +43,25 @@ app.get("/api/rooms",async(req,res)=>{
     res.status(500).json({ success: false, message: err.message });
   }
 })
-app.use("/api/hotels", hotelRouter);
 
 // ✅ Protected middleware to attach user
-app.use(requireAuth, async (req, res, next) => {
+app.use(requireAuth(), async (req, res, next) => {
   try {
     const { userId } = req.auth;
     const user = await User.findOne({ clerkId: userId });
     if (!user) return res.status(404).json({ error: "User not found" });
     req.user = user;
-    next();
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Internal server error" });
+  }finally{
+    next()
   }
 });
 
 // ✅ Routes
 app.use("/api/user", userRouter);
+app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 
