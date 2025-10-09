@@ -3,7 +3,7 @@ import { Webhook } from "svix";
 
 const clerkWebhooks = async (req, res) => {
   try {
-    const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
+    const webhook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
 
     const headers = {
       "svix-id": req.headers["svix-id"],
@@ -11,9 +11,9 @@ const clerkWebhooks = async (req, res) => {
       "svix-signature": req.headers["svix-signature"],
     };
 
-    const payload = req.body; // raw buffer from server.js
+    // const payload = req.body; // raw buffer from server.js
 
-    const event = await wh.verify(payload, headers);
+    const event = await webhook.verify(JSON.stringify(req.body), headers);
     console.log("Verified event:", event.type);
 
     const { type, data } = req.body;
@@ -21,7 +21,7 @@ const clerkWebhooks = async (req, res) => {
     switch (type) {
       case "user.created": {
         const userData = {
-          clerkId: data.id,
+          _id: data.id,
           username: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
           email: data.email_addresses?.[0]?.email_address || "",
           image: data.image_url || "",
@@ -34,18 +34,18 @@ const clerkWebhooks = async (req, res) => {
         break;
       }
       case "user.deleted": {
-        await User.findOneAndDelete({ clerkId: data.id });
+        await User.findOneAndDelete({ _id: data.id });
         break;
       }
       case "user.updated": {
         const userData = {
-          clerkId: data.id,
+          _id: data.id,
           username: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
           email: data.email_addresses?.[0]?.email_address || "",
           image: data.image_url || "",
           recentSearchedCities: ["new"],
         };
-        await User.findOneAndUpdate({ clerkId: data.id }, userData);
+        await User.findOneAndUpdate({ _id: data.id }, userData);
         break;
       }
       default:
