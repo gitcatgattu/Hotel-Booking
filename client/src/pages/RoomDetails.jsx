@@ -6,22 +6,72 @@ import {
   roomCommonData,
   roomsDummyData,
 } from "../assets/assets";
+import { useAppContext } from "../context/AppContext";
+import toast from "react-hot-toast";
 
 const RoomDetails = () => {
   const { id } = useParams();
-
+  const {rooms,getToken,axios,navigate}=useAppContext()
   const [room, setRoom] = useState(null);
 
   const [mainImage, setMainImage] = useState(null);
-
+  const [checkInDate,setCheckInDate]=useState(null)
+  const [checkOutDate,setCheckOutDate]=useState(null)
+  const [guests,setGuests]=useState(1)
+  const [isAvailable,setIsAvailable]=useState(false)
   useEffect(() => {
-    const room = roomsDummyData.find((room) => room._id === id);
+    const room = rooms.find((room) => {
+      return room._id === id
 
+    });
     room && setRoom(room);
 
     room && setMainImage(room.images[0]);
-  }, []);
+  }, [rooms]);
 
+  const checkAvailability=async ()=>{
+    try{
+      if(checkInDate>=checkOutDate){
+        toast.error("Check In date should be less than check out date")
+      }
+      const {data}=await axios.post('/api/bookings/check-availability',{room:id,checkInDate,checkOutDate})
+      if (data.success){
+        if(data.isAvailable){
+          setIsAvailable(true)
+          toast.success('Room is available')
+        }
+        else{
+          setIsAvailable(false)
+          toast.error("room is not available")
+        }
+      }else{
+        toast.error('success:false')
+      }
+    }catch(error){
+      toast.error(error.message)
+    }
+  }
+  //booki the room
+  const onSubmitHandler=async(e)=>{
+    try{
+      e.preventDefault()
+      if(!isAvailable){
+        return checkAvailability()
+      }else{
+        const {data}=await  axios.post('/api/bookins/book',{room:id,checkInDate,checkOutDate,guests,paymentMethod:"Pay At Hotel"},{headers:{Authorization:`Bearer ${await getToken()}`}})
+        if (data.success){
+          toast.success(data.message)
+          navigate('/my-bookings')
+          scrollTo(0,0)
+        }else{
+          toast.error(data.message)
+        }
+      }
+    }catch(error){
+          toast.error(error.message)
+
+    }
+  }
   return (
     room && (
       <div className="py-28 md:py-35 px-4 md:px-16 1g:px-24 xl:px-32">
@@ -111,6 +161,7 @@ rounded-1g bg-gray-100"
         </div>
 
         <form
+          onSubmit={onSubmitHandler}
           className="flex flex-col md:flex-row items-start md:items-center
           justify-between bg-white shadow-[0px_0px_20px_rgba(0,0,0,0.15)] p-6 rounded-xl mx-auto mt-6 max-w-6xl"
         >
@@ -123,6 +174,7 @@ rounded-1g bg-gray-100"
               <input
                 type="date"
                 id="checkInDate"
+                 onChange={e=>setCheckInDate(e.target.value)}  min={new Date().toISOString().split('T')[0]}
                 placeholder="Check-In"
                 className="w-full rounded border border-gray-300 px-3 py-2 mt-1.5 outline-none"
                 required
@@ -137,7 +189,8 @@ rounded-1g bg-gray-100"
 
               <input
                 type="date"
-                id="checkOutDate"
+                id="checkOutDate" onChange={e=>setCheckOutDate(e.target.value)}
+                min={checkOutDate} disabled={!checkInDate}
                 placeholder="Check-Out"
                 className="w-full rounded border border-gray-300 px-3 py-2 mt-1.5 outline-none"
                 required
@@ -151,8 +204,10 @@ rounded-1g bg-gray-100"
 
               <input
                 type="number"
+                onChange={e=>setGuests(e.target.value)}
+                value={guests}
                 id="guests"
-                placeholder="0"
+                placeholder="1"
                 className=" max-w-20  rounded border border-gray-300 px-3 py-2 mt-1.5 outline-none"
                 required
               />
@@ -163,7 +218,7 @@ rounded-1g bg-gray-100"
             type="submit"
             className="bg-primary hover:bg-primary-dull active:scale-95 transition-all text-white rounded-md max-md:w-full max-md:mt-10 md:px-4 py-3 md:py-2 text-base cursor-pointer"
           >
-            Check Availability
+            {isAvailable?"Book Now":"Check Availability"}
           </button>
         </form>
 

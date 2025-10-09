@@ -16,34 +16,43 @@ const clerkWebhooks = async (req, res) => {
     const event = await wh.verify(payload, headers);
     console.log("Verified event:", event.type);
 
-    const { type, data } = event;
+    const { type, data } = req.body;
 
-    const userData = {
-      clerkId: data.id,
-      username: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
-      email: data.email_addresses?.[0]?.email_address || "",
-      image: data.image_url || "",
-      recentSearchedCities: ["new"],
-    };
-    
     switch (type) {
-      case "user.created":
-        const userid=await User.create(userData);
-        
+      case "user.created": {
+        const userData = {
+          clerkId: data.id,
+          username: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
+          email: data.email_addresses?.[0]?.email_address || "",
+          image: data.image_url || "",
+          recentSearchedCities: ["new"],
+        };
+        const userid = await User.create(userData);
+
         // req.id=userid._id.toString()
         // console.log("user created with id",req.id)
         break;
-      case "user.deleted":
+      }
+      case "user.deleted": {
         await User.findOneAndDelete({ clerkId: data.id });
         break;
-      case "user.updated":
+      }
+      case "user.updated": {
+        const userData = {
+          clerkId: data.id,
+          username: `${data.first_name || ""} ${data.last_name || ""}`.trim(),
+          email: data.email_addresses?.[0]?.email_address || "",
+          image: data.image_url || "",
+          recentSearchedCities: ["new"],
+        };
         await User.findOneAndUpdate({ clerkId: data.id }, userData);
         break;
+      }
       default:
         console.log("Unhandled event type:", type);
         break;
     }
-console.log(req.user.id)
+    console.log(req.user.id);
 
     res.status(200).json({ success: true, message: "Webhook processed" });
   } catch (err) {

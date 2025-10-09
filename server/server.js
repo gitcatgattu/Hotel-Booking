@@ -43,6 +43,8 @@ app.get("/api/rooms",async(req,res)=>{
     res.status(500).json({ success: false, message: err.message });
   }
 })
+app.use("/api/hotels", hotelRouter);
+
 // ✅ Protected middleware to attach user
 app.use(requireAuth, async (req, res, next) => {
   try {
@@ -59,7 +61,6 @@ app.use(requireAuth, async (req, res, next) => {
 
 // ✅ Routes
 app.use("/api/user", userRouter);
-app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 

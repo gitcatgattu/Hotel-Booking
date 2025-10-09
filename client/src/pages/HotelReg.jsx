@@ -13,9 +13,11 @@ const HotelReg = () => {
   const onSubmitHandler=async (event)=>{
     try {
         event.preventDefault()
+        const token=await getToken()
+        console.log("token from hotelreg",token)
         const {data}=await axios.post(`/api/hotels`,{
           name,contact,address,city
-        },{headers:{Authorization:`Bearer ${await getToken()}`}})
+        },{headers:{Authorization:`Bearer ${token}`}})
         if(data.success){
           toast.success(data.message)
           setIsOwner(true)
@@ -119,9 +121,7 @@ rounded w-full px-3 py-2.5 mt-1 outline-indigo-500 font-light'
             </select>
           </div>
           <button
-            className="bg-indigo-500 hover:bg-indigo-600 transition-all
-
-text-white mr-auto px-6 py-2 rounded cursor-pointer mt-6"
+            className="bg-indigo-500 hover:bg-indigo-600 transition-all text-white mr-auto px-6 py-2 rounded cursor-pointer mt-6"
           >
             Register
           </button>
