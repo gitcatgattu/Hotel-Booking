@@ -2,126 +2,74 @@ import Booking from "../models/Booking.js";
 import Hotel from "../models/Hotel.js";
 import Room from "../models/Room.js";
 
-const checkAvailability = async ({ checkInDate, checkOutDate, room }) => {
-  try {
-    const bookings = await Booking.find({
-      room,
-      checkInDate: { $lte: checkOutDate },
-      checkOutDate: { $gte: checkInDate },
-    });
-    const isAvailable = bookings.length === 0;
-    return isAvailable;
-  } catch (error) {
-    console.log(error.message);
-  }
-};
-
-// API to check availability of room
-
-//POST/api/bookings/check-availability
-
+// Check room availability
 export const checkAvailabilityAPI = async (req, res) => {
   try {
-    const { room, checkInDate, checkOutDate } = req.body;
+    const { hotelId, roomId, checkInDate, checkOutDate } = req.body;
 
-    const isAvailable = await checkAvailability({
-      checkInDate,
-      checkOutDate,
-      room,
+    const bookings = await Booking.find({
+      hotel: hotelId,
+      room: roomId,
+      $or: [
+        { checkInDate: { $lte: new Date(checkOutDate), $gte: new Date(checkInDate) } },
+        { checkOutDate: { $gte: new Date(checkInDate), $lte: new Date(checkOutDate) } },
+      ],
     });
 
+    const isAvailable = bookings.length === 0;
     res.json({ success: true, isAvailable });
-  } catch (error) {
-    res.json({ success: false, message: error.message });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// / API to create a new booking
-
-//POST/api/bookings/book
-
+// Create a booking
 export const createBooking = async (req, res) => {
   try {
-    const { room, checkInDate, checkOutDate, guests } = req.body;
+    const { hotel, room, checkInDate, checkOutDate, totalPrice, guests, paymentMethod } = req.body;
 
-    const user = req.user._id;
-
-    // Before Booking Check Availability
-
-    const isAvailable = await checkAvailability({
-      checkInDate,
-
-      checkOutDate,
-
+    const booking = await Booking.create({
+      user: req.user._id.toString(),
+      hotel,
       room,
-    });
-    if (!isAvailable) {
-      return res.json({ success: false, message: "Room is not available" });
-    }
-    const roomData = await Room.findById(room).populate("hotel");
-    let totalPrice = roomData.pricePerNight;
-    //calculate price for no of nights
-    const checkIn = new Date(checkInDate);
-    const checkOut = new Date(checkOutDate);
-    const timeDiff = checkOut.getTime() - checkIn.getTime();
-    const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-    totalPrice *= nights;
-    const booking = new Booking.create({
-      user,
-      room,
-      hotel: roomData.hotel._id,
-      guests: +guests,
       checkInDate,
       checkOutDate,
       totalPrice,
+      guests,
+      paymentMethod: paymentMethod || "Pay At Hotel",
     });
 
-    res.json({ success: true, message: "Booking created success" });
-  } catch (error) {
-    res.json({ success: false, message: "Failed to book" });
+    res.json({ success: true, message: "Booking created successfully", booking });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
+// Get user bookings
 export const getUserBookings = async (req, res) => {
   try {
-    const user = req.user._id;
-
-    const bookings = await Booking.find({ user })
-      .populate("room hotel")
-      .sort({ createdAt: -1 });
-
+    const bookings = await Booking.find({ user: req.user._id.toString() });
     res.json({ success: true, bookings });
-  } catch (error) {
-    res.json({ success: false, message: "Failed to fetch bookings" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
+// Get hotel bookings (for owner)
 export const getHotelBookings = async (req, res) => {
   try {
-    console.log(req.auth);
-    const hotel = await Hotel.findOne({ owner: req.auth.userId });
+    const owner = req.user._id.toString();
+    const hotel = await Hotel.findOne({ owner });
+    if (!hotel) return res.status(404).json({ success: false, message: "Hotel not found" });
 
-    if (!hotel) {
-      return res.json({ success: false, message: "No Hotel found" });
-    }
-
-    const bookings = await Booking.find({ hotel: hotel._id })
-      .populate("room hotel user")
-      .sort({ createdAt: -1 });
-
-    //total bookings
-    const totalBookings = bookings.length;
-    //revenue
-    const totalRevenue = bookings.reduce(
-      (acc, booking) => acc + booking.totalPrice,
-      0
-    );
-    res.json({
-      success: true,
-      dashboardData: { totalBookings, totalRevenue, bookings },
-    });
+    const dashboardData = await Booking.find({ hotel: hotel._id.toString() });
+    console.log("printing dashboardData",dashboardData)
+    res.json({ success: true, dashboardData });
   } catch (err) {
-    res.json({ success: false, message: "failed to fetch bookings" });
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };

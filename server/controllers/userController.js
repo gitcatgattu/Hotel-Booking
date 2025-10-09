@@ -1,37 +1,41 @@
-// GET /api/user/
+import User from "../models/User.js";
+
+// Get user data
 export const getUserData = async (req, res) => {
   try {
-    const role = req.user.role;
-    console.log("user role",role)
+    const user = req.user;
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    const recentSearchedCities = req.user.recentSearchedCities;
+    const role = user.role;
+    const recentSearchedCities = user.recentSearchedCities || [];
 
     res.json({ success: true, role, recentSearchedCities });
-  } catch (error) {
-    res.json({ success: false, message: error.message });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// Store User Recent Searched Cities
-
+// Store recent searched cities
 export const storeRecentSearchedCities = async (req, res) => {
   try {
     const { recentSearchedCity } = req.body;
+    const user = req.user;
 
-    const user = await req.user;
+    if (!user.recentSearchedCities) user.recentSearchedCities = [];
 
     if (user.recentSearchedCities.length < 3) {
       user.recentSearchedCities.push(recentSearchedCity);
     } else {
       user.recentSearchedCities.shift();
-
       user.recentSearchedCities.push(recentSearchedCity);
     }
 
     await user.save();
 
-    res.json({ success: true, message: "City added" });
-  } catch (error) {
-    res.json({ success: false, message: error.message });
+    res.json({ success: true, message: "City added", recentSearchedCities: user.recentSearchedCities });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };

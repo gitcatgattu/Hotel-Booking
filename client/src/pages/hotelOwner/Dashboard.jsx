@@ -1,9 +1,43 @@
-import React from "react";
-import { assets, dashboardDummyData } from "../../assets/assets";
+import React, { useEffect } from "react";
+import { assets } from "../../assets/assets";
 import Title from "../../components/Title";
-
+import { useAppContext } from "../../context/AppContext";
 const Dashboard = () => {
-  const [dashboardData, setDashboardData] = React.useState(dashboardDummyData);
+  const {currency,user,getToken,toast,axios}=useAppContext()
+  const [dashboardData, setDashboardData] = React.useState({
+    bookings:[],
+    totalBookings:0,
+    totalRevenue:0
+  });
+
+
+  const fetchDashboardData= async ()=>{
+    try {
+      const {data}=await axios.get('/api/bookings/hotel',{
+        headers:{Authorization: `Bearer ${await getToken()}`}})
+        if(data.success){
+          console.log(data)
+          if (data.dashboardData.length>0)
+          {setDashboardData(data.dashboardData)}
+        }
+        else{
+          toast.error(data.message)
+        }
+      
+    } catch (error) {
+      toast.error(error.message)
+      
+    }
+  }
+
+  
+
+  useEffect(()=>{
+    if(user){
+      fetchDashboardData()
+    }
+  },[user])
+
   return (
     <div>
       <Title
@@ -43,7 +77,7 @@ const Dashboard = () => {
           <div className="flex flex-col md:ml-4 font-medium">
             <p>Total Revenue</p>
             <p className="text-neutral-400 text-base">
-              $ {dashboardData.totalRevenue}
+              {currency}{dashboardData.totalRevenue}
             </p>
           </div>
         </div>
